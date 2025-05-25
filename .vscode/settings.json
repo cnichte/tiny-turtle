@@ -1,0 +1,8 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.espIdfPath": "/Users/cnichte/esp/esp-idf",
+  "idf.toolsPath": "/Users/cnichte/.espressif",
+  "idf.pythonInstallPath": "/opt/homebrew/bin/python",
+  "explorer.sortOrder": "modified",
+  "idf.port": "/dev/tty.usbmodem83342401"
+}
