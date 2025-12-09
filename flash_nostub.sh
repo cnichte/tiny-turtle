@@ -1,6 +1,8 @@
 #!/bin/bash
 # Flash-Script für ESP32-C6 mit --no-stub Option
 # Umgeht Checksum-Probleme beim Stub-Upload
+#
+# Carsten Nichte, 2025
 # 
 # WICHTIG: ESP32-C6 hat zwei USB-Ports:
 # - USB-JTAG Port (normalerweise ...58131 oder ...343401)
@@ -52,6 +54,7 @@ fi
 
 echo "========================================"
 echo "ESP32-C6 Flash Script (NO-STUB Mode)"
+echo "Carsten Nichte, 2025"
 echo "========================================"
 echo "Port:         $PORT"
 echo "Baudrate:     $BAUD"
