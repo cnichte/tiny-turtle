@@ -4,5 +4,6 @@
   "idf.toolsPath": "/Users/cnichte/.espressif",
   "idf.pythonInstallPath": "/opt/homebrew/bin/python",
   "explorer.sortOrder": "modified",
-  "idf.port": "/dev/tty.usbmodem83342401"
+  "idf.port": "/dev/tty.usbmodem5AAF2844941",
+  "idf.flashType": "UART"
 }
