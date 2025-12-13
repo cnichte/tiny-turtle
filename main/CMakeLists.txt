@@ -10,12 +10,14 @@ idf_component_register(
         "tiny_turtle/text_writing_functions.cpp"
         "tiny_turtle/trigonometry.cpp"
         "tiny_turtle/coordinates.cpp"
+        "tiny_turtle/stepper_timer.cpp"
     INCLUDE_DIRS
         "."
         "tiny_turtle"
     REQUIRES
         driver
         esp_adc
+        esp_timer
 )
 
 target_compile_features(${COMPONENT_LIB} PRIVATE cxx_std_17)

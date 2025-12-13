@@ -8,7 +8,7 @@
 #include "esp_log.h"
 #include "esp_random.h"
 #include "esp_rom_sys.h"
-#include "freertos/FreeRTOS.h"
+#include "freertos/FreeRTOS.h" // https://wolles-elektronikkiste.de/freertos-mit-esp32-und-arduino-nutzen
 #include "freertos/task.h"
 
 namespace {

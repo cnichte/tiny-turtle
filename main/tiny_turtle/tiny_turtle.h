@@ -6,6 +6,7 @@
 #include "arduino_compat.h"
 #include "constants.h"
 #include "neopixel_compat.h"
+#include "low_level_hardware_functions.h"  // switchStepper, stopSteppers etc.
 
 // Shared globals (kept to minimize changes from original sketch).
 extern NeoPixel pixels;
@@ -20,13 +21,9 @@ extern bool drawing;
 void led(uint8_t r, uint8_t g, uint8_t b);
 void triTone();
 
-// Motion helpers
-void switchStepper(uint8_t stepper, int direction);
-void stopSteppers();
-void penUp();
-void penDown();
-bool checkBumper();
-bool checkSensor();
+// Motion helpers sind in low_level_hardware_functions.h deklariert:
+// - switchStepper(), stopSteppers() - ISR-safe mit IRAM_ATTR
+// - penUp(), penDown(), checkBumper(), checkSensor()
 
 // Higher-level motion
 bool move(float distance, bool bounceAtObstacle = true);

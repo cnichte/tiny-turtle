@@ -11,6 +11,9 @@
 # Verwendung:
 #   ./flash_nostub.sh [PORT] [BAUDRATE] [PROJECT_NAME]
 #   Beispiel: ./flash_nostub.sh /dev/cu.usbmodem59720627361 115200 robart-firmware-esp32
+#
+# @author Carsten Nichte, 2025
+#
 
 # Automatische Port-Erkennung
 if [ -z "$1" ]; then
@@ -84,6 +87,11 @@ fi
 
 echo "Starte Flash-Vorgang..."
 echo ""
+
+# ESP-IDF Python-Umgebung aktivieren falls vorhanden
+if [ -f "$HOME/.espressif/python_env/idf5.4_py3.14_env/bin/activate" ]; then
+    source "$HOME/.espressif/python_env/idf5.4_py3.14_env/bin/activate"
+fi
 
 python3 -m esptool \
   --chip esp32c6 \

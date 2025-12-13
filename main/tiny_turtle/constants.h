@@ -12,19 +12,19 @@ constexpr int A5 = 5; // 15
 constexpr int A6 = 6; // 16
 constexpr int A7 = 2; // 17
 
-constexpr int STEP_1A = 7; // 9
-constexpr int STEP_1B = 0; // 10
-constexpr int STEP_1C = 1; // 11 
-constexpr int STEP_1D = 8; // 12
+constexpr int STEP_1A = 9; // 9
+constexpr int STEP_1B = 10; // 10
+constexpr int STEP_1C = 11; // 11 
+constexpr int STEP_1D = 12; // 12
 
-constexpr int STEP_2A = 23; // 8
-constexpr int STEP_2B = 22; // 7
-constexpr int STEP_2C = 21; // 6
-constexpr int STEP_2D = 20; // D5 
+constexpr int STEP_2A = 8; // 8
+constexpr int STEP_2B = 7; // 7
+constexpr int STEP_2C = 6; // 6
+constexpr int STEP_2D = 5; // D5 
 
 constexpr int SERVO = 4; // D4
-constexpr int SPEAKER = 18; // 3
-constexpr int NEOPIXEL = 19; // 2
+constexpr int SPEAKER = 3; // 3
+constexpr int NEOPIXEL = 2; // 2
 constexpr int SWITCH_F = A4;
 constexpr int SWITCH_B = A5;
 constexpr int SENSOR = A6;

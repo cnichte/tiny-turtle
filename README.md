@@ -1,5 +1,10 @@
 # README.md
 
+Tiny-Turtle OS für ESP32.
+
+FreeTos ordentlich genutzt?
+https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/freertos.html
+
 ## Welche USB Ports?
 
 ```bash
@@ -23,6 +28,15 @@ Beispiel:
 
 ```bash
 ./flash_nostub.sh /dev/cu.usbmodem59720627361 115200 HELLO_WORLD
+
+./flash_nostub.sh /dev/cu.usbmodem5AAF2844941 115200 <<<<--- tiny turtle
+
+# Monitor starten
+source ~/.espressif/python_env/idf5.4_py3.14_env/bin/activate && idf.py -p /dev/cu.usbmodem5AAF2844941 monitor
+
+Ctrl+] → Monitor beenden
+Ctrl+T, Ctrl+H → Hilfe anzeigen
+Ctrl+T, Ctrl+R → Reset des Boards
 ```
 
 - Falls es nicht klappt:
