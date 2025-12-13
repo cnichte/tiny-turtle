@@ -29,7 +29,6 @@ namespace tiny_turtle
 {
     namespace demos
     {
-
         /**
          * @brief Liste aller verfügbaren Demos
          */
