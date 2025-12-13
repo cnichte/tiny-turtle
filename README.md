@@ -123,14 +123,23 @@ Die NeoPixel LED (mit WS2812-Treiber) wird als Status-Anzeige verwendet. Die ein
 
 - <https://www.berrybase.de/sensoren-module/led/ws2812-13-neopixel/einzel-leds/>
 
-## Welche USB Ports?
+## Setup
+
+siehe:
+
+- `main/tiny_turtle/core/config.h`
+- `main/tiny_turtle_app.cpp`
+
+## Flash it, baby
+
+### Welche USB Ports?
 
 ```bash
 # Check PORTs
 ls /dev/cu.*
 ```
 
-## flash_nostub.sh
+### flash_nostub.sh
 
 - Das ist mein spezielles Flash-Script für den ESP32-C6 mit --no-stub Option
 - Umgeht Checksum-Probleme beim Stub-Upload.
