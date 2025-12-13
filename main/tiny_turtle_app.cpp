@@ -3,13 +3,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-extern void setup();
-extern void loop();
-
 extern "C" void app_main(void) {
-  setup();
+  turtleInit();
   while (true) {
-    loop();
+    turtleLoop();
     vTaskDelay(1);  // yield to RTOS
   }
 }

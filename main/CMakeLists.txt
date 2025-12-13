@@ -1,23 +1,48 @@
 idf_component_register(
     SRCS
+        # App
         "tiny_turtle_app.cpp"
-        "tiny_turtle/arduino_compat.cpp"
-        "tiny_turtle/neopixel_compat.cpp"
-        "tiny_turtle/Tiny_Turtle_Plotter_Hello_World_10.cpp"
-        "tiny_turtle/light_sound.cpp"
-        "tiny_turtle/low_level_hardware_functions.cpp"
-        "tiny_turtle/moving_functions.cpp"
-        "tiny_turtle/text_writing_functions.cpp"
-        "tiny_turtle/trigonometry.cpp"
-        "tiny_turtle/coordinates.cpp"
-        "tiny_turtle/stepper_timer.cpp"
+        
+        # Core Module
+        "tiny_turtle/core/globals.cpp"
+        
+        # HAL Module
+        "tiny_turtle/hal/gpio_hal.cpp"
+        "tiny_turtle/hal/neopixel.cpp"
+        "tiny_turtle/hal/stepper.cpp"
+        "tiny_turtle/hal/servo.cpp"
+        "tiny_turtle/hal/sensors.cpp"
+        "tiny_turtle/hal/audio.cpp"
+        "tiny_turtle/hal/led.cpp"
+        
+        # Motion Module
+        "tiny_turtle/motion/motion.cpp"
+        "tiny_turtle/motion/spiral.cpp"
+        "tiny_turtle/motion/coordinates.cpp"
+        
+        # Drawing Module
+        "tiny_turtle/drawing/text.cpp"
+        "tiny_turtle/drawing/fonts.cpp"
+        
+        # Math Module
+        "tiny_turtle/math/trigonometry.cpp"
+        
+        # Main API
+        "tiny_turtle/tiny_turtle.cpp"
+        
     INCLUDE_DIRS
         "."
         "tiny_turtle"
+        "tiny_turtle/core"
+        "tiny_turtle/hal"
+        "tiny_turtle/motion"
+        "tiny_turtle/drawing"
+        "tiny_turtle/math"
     REQUIRES
         driver
         esp_adc
         esp_timer
+        esp_driver_rmt
 )
 
 target_compile_features(${COMPONENT_LIB} PRIVATE cxx_std_17)

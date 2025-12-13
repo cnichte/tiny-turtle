@@ -1,4 +1,4 @@
-#include "arduino_compat.h"
+#include "gpio_hal.h"
 
 #include <cmath>
 

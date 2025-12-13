@@ -1,9 +1,54 @@
 # README.md
 
-Tiny-Turtle OS für ESP32.
+## Tiny-Turtle OS für ESP32
 
-FreeTos ordentlich genutzt?
-https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/freertos.html
+```txt
+main/
+├── tiny_turtle_app.cpp          (Entry Point)
+├── CMakeLists.txt
+└── tiny_turtle/
+    ├── core/                    # Kern-Funktionalität
+    │   ├── config.h             # Pin-Definitionen, Konstanten
+    │   ├── types.h              # Gemeinsame Typen, Enums
+    │   └── globals.cpp/.h       # Globale Variablen
+    │
+    ├── hal/                     # Hardware Abstraction Layer
+    │   ├── gpio_hal.cpp/.h      # GPIO-Wrapper (pinMode, digitalWrite, delay)
+    │   ├── neopixel.cpp/.h      # NeoPixel LED-Streifen
+    │   ├── stepper.cpp/.h       # Schrittmotor-Steuerung (GPTimer)
+    │   ├── servo.cpp/.h         # Servo (Pen up/down)
+    │   ├── sensors.cpp/.h       # Bumper-Sensoren
+    │   ├── audio.cpp/.h         # Speaker/Buzzer
+    │   └── led.cpp/.h           # LED-Farben
+    │
+    ├── motion/                  # Bewegungs-Logik
+    │   ├── motion.cpp/.h        # forward, backward, turn, move
+    │   ├── spiral.cpp/.h        # Spiral-Bewegungen
+    │   └── coordinates.cpp/.h   # Koordinaten-System
+    │
+    ├── drawing/                 # Zeichen-Funktionen
+    │   ├── text.cpp/.h          # plotText, plotChar
+    │   └── fonts.cpp/.h         # Font-Daten
+    │
+    ├── math/                    # Mathematische Funktionen
+    │   └── trigonometry.cpp/.h  # Winkel- und Distanzberechnungen
+    │
+    ├── tiny_turtle.cpp          # Initialisierung
+    └── tiny_turtle.h            # Public API (alles exportieren)
+```
+
+## Neopixel
+
+Die NeoPixel LED (mit WS2812-Treiber) wird als Status-Anzeige verwendet. Die einzelne RGB-LED zeigt visuell den aktuellen Zustand des Roboters an - ob er bereit ist, ob der Stift oben/unten ist, oder spielt gerade Musik ab:
+
+|Stelle               | Farbe                | Bedeutung               |
+|---------------------|----------------------|-------------------------|
+| tiny_turtle.cpp:30  | 🟢 Grün (0,32,0)     | System initialisiert.   |
+| servo.cpp:27.       | ⚪ Dunkel (15,15,15) | Stift oben (penUp)      |
+| servo.cpp:41        | ⚪ Hell (50,50,50)   | Stift unten (penDown)   |
+| audio.cpp:36        | 🌈 Zufällig          | Lichtshow während Musik |
+
+- <https://www.berrybase.de/sensoren-module/led/ws2812-13-neopixel/einzel-leds/>
 
 ## Welche USB Ports?
 
