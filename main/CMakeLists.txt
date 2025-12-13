@@ -27,6 +27,11 @@ idf_component_register(
         # Math Module
         "tiny_turtle/math/trigonometry.cpp"
         
+        # Demos
+        "tiny_turtle/demos/demo_hello_world.cpp"
+        "tiny_turtle/demos/demo_motor_test.cpp"
+        "tiny_turtle/demos/demo_shapes.cpp"
+        
         # Main API
         "tiny_turtle/tiny_turtle.cpp"
         
@@ -38,6 +43,7 @@ idf_component_register(
         "tiny_turtle/motion"
         "tiny_turtle/drawing"
         "tiny_turtle/math"
+        "tiny_turtle/demos"
     REQUIRES
         driver
         esp_adc
