@@ -4,6 +4,77 @@
 
 - <https://www.niklasroy.com/robotfactory/>
 
+## Unterschiede zur Original Arduino-Firmware
+
+Diese Firmware ist eine komplette Neuentwicklung für den ESP32-C6 mit ESP-IDF - nicht Arduino Framework.
+
+### Hardware-Plattform
+
+| Aspekt | Arduino (Original) | ESP32-C6 (Neu) |
+|--------|-------------------|----------------|
+| MCU | ATmega328P (8-bit AVR) | ESP32-C6 (32-bit RISC-V) |
+| Takt | 16 MHz | 160 MHz |
+| RAM | 2 KB | 512 KB |
+| Flash | 32 KB | 4 MB |
+| Cores | 1 | 1 (aber mit FreeRTOS) |
+
+### Motor-Steuerung
+
+| Arduino | ESP32-C6 |
+|---------|----------|
+| `delay()` blockiert CPU | **GPTimer mit ISR** - nicht-blockierend |
+| Feste Schrittgeschwindigkeit | **Rampen** mit Beschleunigung/Abbremsung |
+| Einfache Schleife | Hardware-Timer mit 1µs Auflösung |
+
+### Multitasking
+
+| Arduino | ESP32-C6 |
+|---------|----------|
+| Single-Threaded, alles sequentiell | **FreeRTOS Tasks** |
+| `delay()` blockiert alles | `vTaskDelay()` gibt CPU frei |
+| Kein Watchdog-Management | Task Watchdog integriert |
+
+### NeoPixel LED
+
+| Arduino | ESP32-C6 |
+|---------|----------|
+| Adafruit NeoPixel Library | **RMT-Peripheral** (Hardware-Timing) |
+| Software-Bitbanging | Präzises Hardware-Timing ohne CPU-Last |
+
+### Servo (PWM)
+
+| Arduino | ESP32-C6 |
+|---------|----------|
+| Arduino Servo Library | **LEDC-Peripheral** (Hardware-PWM) |
+| Timer-basiert | Dedizierte PWM-Hardware |
+
+### Code-Struktur
+
+| Arduino | ESP32-C6 |
+|---------|----------|
+| Einzelne `.ino` Datei | **Modulare Struktur** mit Namespaces |
+| Globale Funktionen | `tiny_turtle::hal`, `tiny_turtle::motion`, etc. |
+| Arduino Framework | **ESP-IDF** (natives SDK) |
+
+### Timing-Funktionen
+
+| Arduino | ESP32-C6 |
+|---------|----------|
+| `delay()`, `millis()` | Wrapper in `gpio_hal.cpp` |
+| `analogRead()` | ESP-IDF ADC oneshot API |
+| `tone()` | LEDC für Frequenzerzeugung |
+
+### Vorteile der neuen Implementierung
+
+- **10x schnellere CPU** für komplexere Berechnungen
+- **Nicht-blockierende Motorsteuerung** durch Hardware-Timer
+- **Sanfte Beschleunigung/Abbremsung** für präzisere Bewegungen
+- **Zuverlässiges LED-Timing** durch RMT-Hardware
+- **Saubere Code-Struktur** für einfache Erweiterung
+- **WiFi/BLE verfügbar** für das was kommt...
+
+## Projekt-Struktur
+
 ```txt
 main/
 ├── tiny_turtle_app.cpp          (Entry Point)
