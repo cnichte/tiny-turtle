@@ -6,7 +6,7 @@
 
 ## Unterschiede zur Original Arduino-Firmware
 
-Diese Firmware ist eine komplette Neuentwicklung für den ESP32-C6 mit ESP-IDF - nicht Arduino Framework.
+Diese Firmware ist eine komplette Neuentwicklung für den ESP32-C6 mit ESP-IDF - ohne Arduino Framework.
 
 ### Hardware-Plattform
 
