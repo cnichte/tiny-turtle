@@ -2,7 +2,7 @@
 /**
  * @file hal/stepper.h
  * @brief Hardware Abstraction Layer für Schrittmotoren
- * 
+ *
  * Bietet sowohl Low-Level ISR-sichere Funktionen als auch
  * die Timer-basierte High-Level-Steuerung.
  */
@@ -11,107 +11,109 @@
 #include "../core/types.h"
 #include "esp_attr.h"
 
-namespace tiny_turtle {
-namespace hal {
+namespace tiny_turtle
+{
+    namespace hal
+    {
 
-//===========================================================================
-// Low-Level Stepper-Funktionen (ISR-safe)
-//===========================================================================
+        //===========================================================================
+        // Low-Level Stepper-Funktionen (ISR-safe)
+        //===========================================================================
 
-/**
- * @brief Einen Schritt auf einem Motor ausführen
- * @param stepper Motor-Nummer (1 oder 2)
- * @param direction Richtung (-1, 0, 1)
- * @note ISR-safe, kann aus Interrupts aufgerufen werden
- */
-void stepMotor(uint8_t stepper, int direction);
+        /**
+         * @brief Einen Schritt auf einem Motor ausführen
+         * @param stepper Motor-Nummer (1 oder 2)
+         * @param direction Richtung (-1, 0, 1)
+         * @note ISR-safe, kann aus Interrupts aufgerufen werden
+         */
+        void stepMotor(uint8_t stepper, int direction);
 
-/**
- * @brief Alle Motor-Spulen stromlos schalten
- * @note ISR-safe, spart Energie wenn Motoren nicht benötigt werden
- */
-void stopMotors();
+        /**
+         * @brief Alle Motor-Spulen stromlos schalten
+         * @note ISR-safe, spart Energie wenn Motoren nicht benötigt werden
+         */
+        void stopMotors();
 
-//===========================================================================
-// Timer-basierte Motor-Steuerung
-//===========================================================================
+        //===========================================================================
+        // Timer-basierte Motor-Steuerung
+        //===========================================================================
 
-/**
- * @brief GPTimer für Motorsteuerung initialisieren
- */
-void initStepperTimer();
+        /**
+         * @brief GPTimer für Motorsteuerung initialisieren
+         */
+        void initStepperTimer();
 
-/**
- * @brief Timer starten (Motoren beginnen zu laufen)
- */
-void startStepperTimer();
+        /**
+         * @brief Timer starten (Motoren beginnen zu laufen)
+         */
+        void startStepperTimer();
 
-/**
- * @brief Timer stoppen
- */
-void stopStepperTimer();
+        /**
+         * @brief Timer stoppen
+         */
+        void stopStepperTimer();
 
-/**
- * @brief Motor-Befehl setzen
- * @param cmd Gewünschte Bewegung (FORWARD, BACKWARD, SPIN_CW, etc.)
- */
-void setMotorCommand(MotorCommand cmd);
+        /**
+         * @brief Motor-Befehl setzen
+         * @param cmd Gewünschte Bewegung (FORWARD, BACKWARD, SPIN_CW, etc.)
+         */
+        void setMotorCommand(MotorCommand cmd);
 
-/**
- * @brief Schrittgeschwindigkeit setzen
- * @param stepIntervalUs Intervall zwischen Schritten in Mikrosekunden
- *                       Kleiner = schneller (min: 500, max: 10000)
- */
-void setStepSpeed(uint32_t stepIntervalUs);
+        /**
+         * @brief Schrittgeschwindigkeit setzen
+         * @param stepIntervalUs Intervall zwischen Schritten in Mikrosekunden
+         *                       Kleiner = schneller (min: 500, max: 10000)
+         */
+        void setStepSpeed(uint32_t stepIntervalUs);
 
-/**
- * @brief Aktuelle Geschwindigkeit abfragen
- */
-uint32_t getStepSpeed();
+        /**
+         * @brief Aktuelle Geschwindigkeit abfragen
+         */
+        uint32_t getStepSpeed();
 
-/**
- * @brief Schrittzähler abfragen
- */
-int32_t getStepCount();
+        /**
+         * @brief Schrittzähler abfragen
+         */
+        int32_t getStepCount();
 
-/**
- * @brief Schrittzähler zurücksetzen
- */
-void resetStepCount();
+        /**
+         * @brief Schrittzähler zurücksetzen
+         */
+        void resetStepCount();
 
-/**
- * @brief Prüfen ob Motoren aktiv sind
- */
-bool isMotorRunning();
+        /**
+         * @brief Prüfen ob Motoren aktiv sind
+         */
+        bool isMotorRunning();
 
-//===========================================================================
-// Rampen-Steuerung
-//===========================================================================
+        //===========================================================================
+        // Rampen-Steuerung
+        //===========================================================================
 
-/**
- * @brief Beschleunigungs-/Verzögerungsrampe aktivieren
- * @param rampSteps Anzahl Schritte für volle Rampe (0 = deaktiviert)
- */
-void setRamp(uint32_t rampSteps);
+        /**
+         * @brief Beschleunigungs-/Verzögerungsrampe aktivieren
+         * @param rampSteps Anzahl Schritte für volle Rampe (0 = deaktiviert)
+         */
+        void setRamp(uint32_t rampSteps);
 
-/**
- * @brief Zielgeschwindigkeit mit Rampe anfahren
- * @param targetSpeedUs Ziel-Intervall in Mikrosekunden
- */
-void setTargetSpeed(uint32_t targetSpeedUs);
+        /**
+         * @brief Zielgeschwindigkeit mit Rampe anfahren
+         * @param targetSpeedUs Ziel-Intervall in Mikrosekunden
+         */
+        void setTargetSpeed(uint32_t targetSpeedUs);
 
-/**
- * @brief Prüfen ob Rampe aktiv ist
- */
-bool isRamping();
+        /**
+         * @brief Prüfen ob Rampe aktiv ist
+         */
+        bool isRamping();
 
-/**
- * @brief Sanft stoppen (mit Verzögerungsrampe)
- */
-void smoothStop();
+        /**
+         * @brief Sanft stoppen (mit Verzögerungsrampe)
+         */
+        void smoothStop();
 
-}  // namespace hal
-}  // namespace tiny_turtle
+    } // namespace hal
+} // namespace tiny_turtle
 
 // Legacy-Kompatibilität (IRAM_ATTR nur in Definition, nicht Deklaration)
 void switchStepper(uint8_t stepper, int direction);

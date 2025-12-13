@@ -2,7 +2,7 @@
 /**
  * @file neopixel.h
  * @brief WS2812B NeoPixel LED-Treiber für ESP32
- * 
+ *
  * Verwendet das RMT-Peripheral für präzises Timing.
  * NeoPixel ist der Markenname von Adafruit für WS2812B RGB-LED-Chips.
  */
@@ -15,18 +15,19 @@
 
 /**
  * @brief NeoPixel (WS2812B) LED-Controller
- * 
+ *
  * Steuert adressierbare RGB-LEDs über das RMT-Peripheral des ESP32.
  */
-class NeoPixel {
- public:
+class NeoPixel
+{
+public:
   /**
    * @brief Konstruktor
    * @param pin GPIO-Pin für die Datenleitung
    * @param pixels Anzahl der LEDs in der Kette
    */
   NeoPixel(int pin, int pixels);
-  
+
   /**
    * @brief Destruktor - gibt RMT-Ressourcen frei
    */
@@ -69,11 +70,11 @@ class NeoPixel {
    */
   int numPixels() const { return count_; }
 
- private:
+private:
   int pin_;
   int count_;
-  std::vector<uint8_t> buffer_;  // RGB-Daten
-  
+  std::vector<uint8_t> buffer_; // RGB-Daten
+
   // RMT-Handles
   rmt_channel_handle_t rmt_channel_{nullptr};
   rmt_encoder_handle_t rmt_encoder_{nullptr};

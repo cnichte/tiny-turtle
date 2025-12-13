@@ -4,14 +4,16 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-extern "C" void app_main(void) {
+extern "C" void app_main(void)
+{
   turtleInit();
-  
-  // Motor-Test Demo starten
-  tiny_turtle::demos::runMotorTest();
-  
-  while (true) {
+
+  // Dauerhafter Motor-Test (Endlosschleife)
+  tiny_turtle::demos::runSimpleRotationTest();
+
+  while (true)
+  {
     turtleLoop();
-    vTaskDelay(1);  // yield to RTOS
+    vTaskDelay(1); // yield to RTOS
   }
 }

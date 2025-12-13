@@ -23,14 +23,15 @@ inline long constrain(long x, long a, long b) { return std::clamp(x, a, b); }
 int analogRead(int pin);
 void tone(int pin, uint32_t freq_hz, uint32_t duration_ms);
 
-class Servo {
- public:
+class Servo
+{
+public:
   Servo();
   void attach(int pin);
   void write(int angle_deg);
   void detach();
 
- private:
+private:
   bool attached_;
   gpio_num_t pin_;
 };

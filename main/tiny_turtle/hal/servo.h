@@ -7,37 +7,39 @@
 #include <cstdint>
 #include "../core/types.h"
 
-namespace tiny_turtle {
-namespace hal {
+namespace tiny_turtle
+{
+    namespace hal
+    {
 
-/**
- * @brief Servo initialisieren
- */
-void initServo();
+        /**
+         * @brief Servo initialisieren
+         */
+        void initServo();
 
-/**
- * @brief Stift anheben
- */
-void penUp();
+        /**
+         * @brief Stift anheben
+         */
+        void penUp();
 
-/**
- * @brief Stift absenken
- */
-void penDown();
+        /**
+         * @brief Stift absenken
+         */
+        void penDown();
 
-/**
- * @brief Aktuellen Stift-Zustand abfragen
- */
-PenState getPenState();
+        /**
+         * @brief Aktuellen Stift-Zustand abfragen
+         */
+        PenState getPenState();
 
-/**
- * @brief Servo auf bestimmten Winkel setzen
- * @param angle Winkel in Grad (0-180)
- */
-void setServoAngle(int angle);
+        /**
+         * @brief Servo auf bestimmten Winkel setzen
+         * @param angle Winkel in Grad (0-180)
+         */
+        void setServoAngle(int angle);
 
-}  // namespace hal
-}  // namespace tiny_turtle
+    } // namespace hal
+} // namespace tiny_turtle
 
 // Legacy-Kompatibilität
 void penUp();

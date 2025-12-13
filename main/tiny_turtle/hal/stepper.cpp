@@ -13,324 +13,414 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-static const char* TAG = "hal.stepper";
+static const char *TAG = "hal.stepper";
 
-namespace tiny_turtle {
-namespace hal {
+namespace tiny_turtle
+{
+    namespace hal
+    {
 
-//===========================================================================
-// Statische Daten (IRAM für ISR-Zugriff)
-//===========================================================================
+        //===========================================================================
+        // Statische Daten (IRAM für ISR-Zugriff)
+        //===========================================================================
 
-static const DRAM_ATTR uint8_t STEPPER_PINS[2][4] = {
-    { config::STEP_1A, config::STEP_1B, config::STEP_1C, config::STEP_1D },
-    { config::STEP_2A, config::STEP_2B, config::STEP_2C, config::STEP_2D }
-};
+        static const DRAM_ATTR uint8_t STEPPER_PINS[2][4] = {
+            {config::STEP_1A, config::STEP_1B, config::STEP_1C, config::STEP_1D},
+            {config::STEP_2A, config::STEP_2B, config::STEP_2C, config::STEP_2D}};
 
-static const DRAM_ATTR uint8_t HALF_STEP_PATTERN[8][4] = {
-    { 1, 0, 0, 0 },
-    { 1, 1, 0, 0 },
-    { 0, 1, 0, 0 },
-    { 0, 1, 1, 0 },
-    { 0, 0, 1, 0 },
-    { 0, 0, 1, 1 },
-    { 0, 0, 0, 1 },
-    { 1, 0, 0, 1 }
-};
+        static const DRAM_ATTR uint8_t HALF_STEP_PATTERN[8][4] = {
+            {1, 0, 0, 0},
+            {1, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 1, 1, 0},
+            {0, 0, 1, 0},
+            {0, 0, 1, 1},
+            {0, 0, 0, 1},
+            {1, 0, 0, 1}};
 
-// Timer-Handle
-static gptimer_handle_t s_timer = nullptr;
+        // Timer-Handle
+        static gptimer_handle_t s_timer = nullptr;
 
-// Motor-Zustand (volatile für ISR)
-static volatile MotorCommand s_command = MotorCommand::STOP;
-static volatile int s_motor1_dir = 0;
-static volatile int s_motor2_dir = 0;
-static volatile bool s_timer_running = false;
-static volatile int32_t s_step_count = 0;
+        // Motor-Zustand (volatile für ISR)
+        static volatile MotorCommand s_command = MotorCommand::STOP;
+        static volatile int s_motor1_dir = 0;
+        static volatile int s_motor2_dir = 0;
+        static volatile bool s_timer_running = false;
+        static volatile int32_t s_step_count = 0;
 
-// Geschwindigkeits-Einstellungen
-static volatile uint32_t s_current_speed_us = config::DEFAULT_STEP_DELAY_US;
-static volatile uint32_t s_target_speed_us = config::DEFAULT_STEP_DELAY_US;
-static volatile uint32_t s_start_speed_us = 5000;
-static constexpr uint32_t MIN_SPEED_US = 500;
-static constexpr uint32_t MAX_SPEED_US = 10000;
+        // Geschwindigkeits-Einstellungen
+        static volatile uint32_t s_current_speed_us = config::DEFAULT_STEP_DELAY_US;
+        static volatile uint32_t s_target_speed_us = config::DEFAULT_STEP_DELAY_US;
+        static volatile uint32_t s_start_speed_us = 5000;
+        static constexpr uint32_t MIN_SPEED_US = 500;
+        static constexpr uint32_t MAX_SPEED_US = 10000;
 
-// Rampen-Parameter
-static volatile uint32_t s_ramp_steps = 0;
-static volatile uint32_t s_ramp_counter = 0;
-static volatile bool s_ramping_up = false;
-static volatile bool s_ramping_down = false;
-static volatile bool s_smooth_stop = false;
+        // Rampen-Parameter
+        static volatile uint32_t s_ramp_steps = 0;
+        static volatile uint32_t s_ramp_counter = 0;
+        static volatile bool s_ramping_up = false;
+        static volatile bool s_ramping_down = false;
+        static volatile bool s_smooth_stop = false;
 
-//===========================================================================
-// Low-Level Motor-Funktionen
-//===========================================================================
+        //===========================================================================
+        // Low-Level Motor-Funktionen
+        //===========================================================================
 
-void IRAM_ATTR stepMotor(uint8_t stepper, int direction) {
-    uint8_t idx = stepper - 1;
-    
-    if (stepper == 1) {
-        stepCount1 = (8 + direction + stepCount1) % 8;
-        const uint8_t* pattern = HALF_STEP_PATTERN[stepCount1];
-        for (int i = 0; i < 4; i++) {
-            gpio_set_level(static_cast<gpio_num_t>(STEPPER_PINS[idx][i]), pattern[i]);
+        void IRAM_ATTR stepMotor(uint8_t stepper, int direction)
+        {
+            uint8_t idx = stepper - 1;
+
+            if (stepper == 1)
+            {
+                stepCount1 = (8 + direction + stepCount1) % 8;
+                const uint8_t *pattern = HALF_STEP_PATTERN[stepCount1];
+                for (int i = 0; i < 4; i++)
+                {
+                    gpio_set_level(static_cast<gpio_num_t>(STEPPER_PINS[idx][i]), pattern[i]);
+                }
+            }
+            else
+            {
+                stepCount2 = (8 + direction + stepCount2) % 8;
+                const uint8_t *pattern = HALF_STEP_PATTERN[stepCount2];
+                for (int i = 0; i < 4; i++)
+                {
+                    gpio_set_level(static_cast<gpio_num_t>(STEPPER_PINS[idx][i]), pattern[i]);
+                }
+            }
         }
-    } else {
-        stepCount2 = (8 + direction + stepCount2) % 8;
-        const uint8_t* pattern = HALF_STEP_PATTERN[stepCount2];
-        for (int i = 0; i < 4; i++) {
-            gpio_set_level(static_cast<gpio_num_t>(STEPPER_PINS[idx][i]), pattern[i]);
+
+        void IRAM_ATTR stopMotors()
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                gpio_set_level(static_cast<gpio_num_t>(STEPPER_PINS[0][i]), 0);
+                gpio_set_level(static_cast<gpio_num_t>(STEPPER_PINS[1][i]), 0);
+            }
         }
-    }
-}
 
-void IRAM_ATTR stopMotors() {
-    for (int i = 0; i < 4; i++) {
-        gpio_set_level(static_cast<gpio_num_t>(STEPPER_PINS[0][i]), 0);
-        gpio_set_level(static_cast<gpio_num_t>(STEPPER_PINS[1][i]), 0);
-    }
-}
+        //===========================================================================
+        // Timer ISR
+        //===========================================================================
 
-//===========================================================================
-// Timer ISR
-//===========================================================================
+        // Debug: LED-Toggle-Zähler
+        static volatile uint32_t s_isr_counter = 0;
+        static volatile bool s_led_state = false;
 
-static void IRAM_ATTR updateTimerAlarm(uint32_t intervalUs) {
-    gptimer_alarm_config_t cfg = {
-        .alarm_count = intervalUs,
-        .reload_count = 0,
-        .flags = { .auto_reload_on_alarm = true }
-    };
-    gptimer_set_alarm_action(s_timer, &cfg);
-}
+        // Debug-LED aus config.h verwenden
 
-static bool IRAM_ATTR timerISR(gptimer_handle_t timer,
-                                const gptimer_alarm_event_data_t* edata,
-                                void* ctx) {
-    // Rampen-Verarbeitung
-    if (s_ramping_up || s_ramping_down) {
-        s_ramp_counter = s_ramp_counter + 1;
-        
-        if (s_ramp_counter >= s_ramp_steps) {
-            s_current_speed_us = s_ramping_up ? s_target_speed_us : s_start_speed_us;
-            s_ramping_up = false;
-            s_ramping_down = false;
-            s_ramp_counter = 0;
-            
-            if (s_smooth_stop) {
-                s_smooth_stop = false;
-                s_command = MotorCommand::STOP;
+        static void IRAM_ATTR updateTimerAlarm(uint32_t intervalUs)
+        {
+            gptimer_alarm_config_t cfg = {
+                .alarm_count = intervalUs,
+                .reload_count = 0,
+                .flags = {.auto_reload_on_alarm = true}};
+            gptimer_set_alarm_action(s_timer, &cfg);
+        }
+
+        static bool IRAM_ATTR timerISR(gptimer_handle_t timer,
+                                       const gptimer_alarm_event_data_t *edata,
+                                       void *ctx)
+        {
+            // Debug: LED alle 500 ISR-Aufrufe toggeln
+            s_isr_counter++;
+            if (s_isr_counter >= 500)
+            {
+                s_isr_counter = 0;
+                s_led_state = !s_led_state;
+                gpio_set_level(static_cast<gpio_num_t>(config::DEBUG_LED_PIN), s_led_state ? 1 : 0);
+            }
+
+            // Rampen-Verarbeitung
+            if (s_ramping_up || s_ramping_down)
+            {
+                s_ramp_counter = s_ramp_counter + 1;
+
+                if (s_ramp_counter >= s_ramp_steps)
+                {
+                    s_current_speed_us = s_ramping_up ? s_target_speed_us : s_start_speed_us;
+                    s_ramping_up = false;
+                    s_ramping_down = false;
+                    s_ramp_counter = 0;
+
+                    if (s_smooth_stop)
+                    {
+                        s_smooth_stop = false;
+                        s_command = MotorCommand::STOP;
+                        s_motor1_dir = 0;
+                        s_motor2_dir = 0;
+                    }
+                }
+                else
+                {
+                    uint32_t diff = s_start_speed_us - s_target_speed_us;
+                    if (s_ramping_up)
+                    {
+                        s_current_speed_us = s_start_speed_us - (diff * s_ramp_counter / s_ramp_steps);
+                    }
+                    else
+                    {
+                        s_current_speed_us = s_target_speed_us + (diff * s_ramp_counter / s_ramp_steps);
+                    }
+                }
+                updateTimerAlarm(s_current_speed_us);
+            }
+
+            if (s_command == MotorCommand::STOP)
+            {
+                return true;
+            }
+
+            if (s_motor1_dir != 0)
+                stepMotor(1, s_motor1_dir);
+            if (s_motor2_dir != 0)
+                stepMotor(2, s_motor2_dir);
+
+            s_step_count += s_motor1_dir;
+
+            return true;
+        }
+
+        //===========================================================================
+        // Motor-Richtungen
+        //===========================================================================
+
+        static void updateMotorDirections(MotorCommand cmd)
+        {
+            switch (cmd)
+            {
+            case MotorCommand::STOP:
                 s_motor1_dir = 0;
                 s_motor2_dir = 0;
-            }
-        } else {
-            uint32_t diff = s_start_speed_us - s_target_speed_us;
-            if (s_ramping_up) {
-                s_current_speed_us = s_start_speed_us - (diff * s_ramp_counter / s_ramp_steps);
-            } else {
-                s_current_speed_us = s_target_speed_us + (diff * s_ramp_counter / s_ramp_steps);
+                break;
+            case MotorCommand::FORWARD:
+                s_motor1_dir = 1;
+                s_motor2_dir = 1;
+                break;
+            case MotorCommand::BACKWARD:
+                s_motor1_dir = -1;
+                s_motor2_dir = -1;
+                break;
+            case MotorCommand::SPIN_CW:
+                s_motor1_dir = 1;
+                s_motor2_dir = -1;
+                break;
+            case MotorCommand::SPIN_CCW:
+                s_motor1_dir = -1;
+                s_motor2_dir = 1;
+                break;
             }
         }
-        updateTimerAlarm(s_current_speed_us);
-    }
-    
-    if (s_command == MotorCommand::STOP) {
-        return true;
-    }
-    
-    if (s_motor1_dir != 0) stepMotor(1, s_motor1_dir);
-    if (s_motor2_dir != 0) stepMotor(2, s_motor2_dir);
-    
-    s_step_count += s_motor1_dir;
-    
-    return true;
-}
 
-//===========================================================================
-// Motor-Richtungen
-//===========================================================================
+        //===========================================================================
+        // Timer-Steuerung
+        //===========================================================================
 
-static void updateMotorDirections(MotorCommand cmd) {
-    switch (cmd) {
-        case MotorCommand::STOP:
-            s_motor1_dir = 0;
-            s_motor2_dir = 0;
-            break;
-        case MotorCommand::FORWARD:
-            s_motor1_dir = 1;
-            s_motor2_dir = 1;
-            break;
-        case MotorCommand::BACKWARD:
-            s_motor1_dir = -1;
-            s_motor2_dir = -1;
-            break;
-        case MotorCommand::SPIN_CW:
-            s_motor1_dir = 1;
-            s_motor2_dir = -1;
-            break;
-        case MotorCommand::SPIN_CCW:
-            s_motor1_dir = -1;
-            s_motor2_dir = 1;
-            break;
-    }
-}
+        void initStepperTimer()
+        {
+            ESP_LOGI(TAG, "Initialisiere GPTimer...");
 
-//===========================================================================
-// Timer-Steuerung
-//===========================================================================
+            // GPIO-Pins für Stepper als Output konfigurieren
+            gpio_config_t io_conf = {};
+            io_conf.mode = GPIO_MODE_OUTPUT;
+            io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+            io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+            io_conf.intr_type = GPIO_INTR_DISABLE;
 
-void initStepperTimer() {
-    ESP_LOGI(TAG, "Initialisiere GPTimer...");
-    
-    gptimer_config_t cfg = {
-        .clk_src = GPTIMER_CLK_SRC_DEFAULT,
-        .direction = GPTIMER_COUNT_UP,
-        .resolution_hz = 1000000,
-        .intr_priority = 0,
-        .flags = {
-            .intr_shared = false,
-            .allow_pd = false,
-            .backup_before_sleep = false,
+            // Motor 1: Pins konfigurieren
+            io_conf.pin_bit_mask = (1ULL << config::STEP_1A) | (1ULL << config::STEP_1B) |
+                                   (1ULL << config::STEP_1C) | (1ULL << config::STEP_1D);
+            gpio_config(&io_conf);
+            ESP_LOGI(TAG, "Motor 1 GPIOs: %d, %d, %d, %d",
+                     config::STEP_1A, config::STEP_1B, config::STEP_1C, config::STEP_1D);
+
+            // Motor 2: Pins konfigurieren
+            io_conf.pin_bit_mask = (1ULL << config::STEP_2A) | (1ULL << config::STEP_2B) |
+                                   (1ULL << config::STEP_2C) | (1ULL << config::STEP_2D);
+            gpio_config(&io_conf);
+            ESP_LOGI(TAG, "Motor 2 GPIOs: %d, %d, %d, %d",
+                     config::STEP_2A, config::STEP_2B, config::STEP_2C, config::STEP_2D);
+
+            // Debug-LED Pin konfigurieren
+            io_conf.pin_bit_mask = (1ULL << config::DEBUG_LED_PIN);
+            gpio_config(&io_conf);
+            ESP_LOGI(TAG, "Debug-LED GPIO: %d", config::DEBUG_LED_PIN);
+
+            gptimer_config_t cfg = {
+                .clk_src = GPTIMER_CLK_SRC_DEFAULT,
+                .direction = GPTIMER_COUNT_UP,
+                .resolution_hz = 1000000,
+                .intr_priority = 0,
+                .flags = {
+                    .intr_shared = false,
+                    .allow_pd = false,
+                    .backup_before_sleep = false,
+                }};
+
+            ESP_ERROR_CHECK(gptimer_new_timer(&cfg, &s_timer));
+
+            gptimer_alarm_config_t alarm = {
+                .alarm_count = s_current_speed_us,
+                .reload_count = 0,
+                .flags = {.auto_reload_on_alarm = true}};
+            ESP_ERROR_CHECK(gptimer_set_alarm_action(s_timer, &alarm));
+
+            gptimer_event_callbacks_t cbs = {.on_alarm = timerISR};
+            ESP_ERROR_CHECK(gptimer_register_event_callbacks(s_timer, &cbs, nullptr));
+            ESP_ERROR_CHECK(gptimer_enable(s_timer));
+
+            ESP_LOGI(TAG, "GPTimer initialisiert (%lu µs)", s_current_speed_us);
         }
-    };
-    
-    ESP_ERROR_CHECK(gptimer_new_timer(&cfg, &s_timer));
-    
-    gptimer_alarm_config_t alarm = {
-        .alarm_count = s_current_speed_us,
-        .reload_count = 0,
-        .flags = { .auto_reload_on_alarm = true }
-    };
-    ESP_ERROR_CHECK(gptimer_set_alarm_action(s_timer, &alarm));
-    
-    gptimer_event_callbacks_t cbs = { .on_alarm = timerISR };
-    ESP_ERROR_CHECK(gptimer_register_event_callbacks(s_timer, &cbs, nullptr));
-    ESP_ERROR_CHECK(gptimer_enable(s_timer));
-    
-    ESP_LOGI(TAG, "GPTimer initialisiert (%lu µs)", s_current_speed_us);
-}
 
-void startStepperTimer() {
-    if (!s_timer_running && s_timer) {
-        ESP_ERROR_CHECK(gptimer_start(s_timer));
-        s_timer_running = true;
-        ESP_LOGI(TAG, "Timer gestartet");
-    }
-}
+        void startStepperTimer()
+        {
+            if (!s_timer_running && s_timer)
+            {
+                ESP_ERROR_CHECK(gptimer_start(s_timer));
+                s_timer_running = true;
+                ESP_LOGI(TAG, "Timer gestartet");
+            }
+        }
 
-void stopStepperTimer() {
-    if (s_timer_running && s_timer) {
-        ESP_ERROR_CHECK(gptimer_stop(s_timer));
-        s_timer_running = false;
-        stopMotors();
-        ESP_LOGI(TAG, "Timer gestoppt");
-    }
-}
+        void stopStepperTimer()
+        {
+            if (s_timer_running && s_timer)
+            {
+                ESP_ERROR_CHECK(gptimer_stop(s_timer));
+                s_timer_running = false;
+                stopMotors();
+                ESP_LOGI(TAG, "Timer gestoppt");
+            }
+        }
 
-void setMotorCommand(MotorCommand cmd) {
-    s_command = cmd;
-    updateMotorDirections(cmd);
-    
-    if (cmd == MotorCommand::STOP) {
-        stopMotors();
-    }
-    
-    static const char* names[] = {"STOP", "FORWARD", "BACKWARD", "SPIN_CW", "SPIN_CCW"};
-    ESP_LOGI(TAG, "Befehl: %s (M1=%d, M2=%d)", names[static_cast<int>(cmd)], s_motor1_dir, s_motor2_dir);
-}
+        void setMotorCommand(MotorCommand cmd)
+        {
+            s_command = cmd;
+            updateMotorDirections(cmd);
 
-void setStepSpeed(uint32_t intervalUs) {
-    if (intervalUs < MIN_SPEED_US) intervalUs = MIN_SPEED_US;
-    if (intervalUs > MAX_SPEED_US) intervalUs = MAX_SPEED_US;
-    
-    s_current_speed_us = intervalUs;
-    
-    if (s_timer) {
-        bool wasRunning = s_timer_running;
-        if (wasRunning) gptimer_stop(s_timer);
-        
-        gptimer_alarm_config_t alarm = {
-            .alarm_count = s_current_speed_us,
-            .reload_count = 0,
-            .flags = { .auto_reload_on_alarm = true }
-        };
-        gptimer_set_alarm_action(s_timer, &alarm);
-        
-        if (wasRunning) gptimer_start(s_timer);
-    }
-    
-    ESP_LOGI(TAG, "Geschwindigkeit: %lu µs/Schritt", s_current_speed_us);
-}
+            if (cmd == MotorCommand::STOP)
+            {
+                stopMotors();
+            }
+            else
+            {
+                // Timer starten wenn noch nicht läuft
+                startStepperTimer();
+            }
 
-uint32_t getStepSpeed() { return s_current_speed_us; }
-int32_t getStepCount() { return s_step_count; }
-void resetStepCount() { s_step_count = 0; }
-bool isMotorRunning() { return s_timer_running && (s_command != MotorCommand::STOP); }
+            static const char *names[] = {"STOP", "FORWARD", "BACKWARD", "SPIN_CW", "SPIN_CCW"};
+            ESP_LOGI(TAG, "Befehl: %s (M1=%d, M2=%d)", names[static_cast<int>(cmd)], s_motor1_dir, s_motor2_dir);
+        }
 
-//===========================================================================
-// Rampen-Steuerung
-//===========================================================================
+        void setStepSpeed(uint32_t intervalUs)
+        {
+            if (intervalUs < MIN_SPEED_US)
+                intervalUs = MIN_SPEED_US;
+            if (intervalUs > MAX_SPEED_US)
+                intervalUs = MAX_SPEED_US;
 
-void setRamp(uint32_t steps) {
-    s_ramp_steps = steps;
-    ESP_LOGI(TAG, "Rampe: %lu Schritte", steps);
-}
+            s_current_speed_us = intervalUs;
 
-void setTargetSpeed(uint32_t targetUs) {
-    if (targetUs < MIN_SPEED_US) targetUs = MIN_SPEED_US;
-    if (targetUs > MAX_SPEED_US) targetUs = MAX_SPEED_US;
-    
-    if (s_ramp_steps == 0) {
-        setStepSpeed(targetUs);
-        return;
-    }
-    
-    s_target_speed_us = targetUs;
-    s_ramp_counter = 0;
-    
-    if (s_current_speed_us > targetUs) {
-        s_start_speed_us = s_current_speed_us;
-        s_ramping_up = true;
-        s_ramping_down = false;
-        ESP_LOGI(TAG, "Beschleunigung: %lu -> %lu µs", s_start_speed_us, s_target_speed_us);
-    } else if (s_current_speed_us < targetUs) {
-        s_start_speed_us = s_current_speed_us;
-        s_ramping_down = true;
-        s_ramping_up = false;
-        ESP_LOGI(TAG, "Verzögerung: %lu -> %lu µs", s_start_speed_us, s_target_speed_us);
-    }
-}
+            if (s_timer)
+            {
+                bool wasRunning = s_timer_running;
+                if (wasRunning)
+                    gptimer_stop(s_timer);
 
-bool isRamping() { return s_ramping_up || s_ramping_down; }
+                gptimer_alarm_config_t alarm = {
+                    .alarm_count = s_current_speed_us,
+                    .reload_count = 0,
+                    .flags = {.auto_reload_on_alarm = true}};
+                gptimer_set_alarm_action(s_timer, &alarm);
 
-void smoothStop() {
-    if (s_ramp_steps == 0 || s_command == MotorCommand::STOP) {
-        setMotorCommand(MotorCommand::STOP);
-        return;
-    }
-    
-    s_smooth_stop = true;
-    s_target_speed_us = s_current_speed_us;
-    s_start_speed_us = MAX_SPEED_US;
-    s_ramp_counter = 0;
-    s_ramping_down = true;
-    s_ramping_up = false;
-    
-    ESP_LOGI(TAG, "Sanftes Stoppen (%lu Schritte)", s_ramp_steps);
-}
+                if (wasRunning)
+                    gptimer_start(s_timer);
+            }
 
-}  // namespace hal
-}  // namespace tiny_turtle
+            ESP_LOGI(TAG, "Geschwindigkeit: %lu µs/Schritt", s_current_speed_us);
+        }
+
+        uint32_t getStepSpeed() { return s_current_speed_us; }
+        int32_t getStepCount() { return s_step_count; }
+        void resetStepCount() { s_step_count = 0; }
+        bool isMotorRunning() { return s_timer_running && (s_command != MotorCommand::STOP); }
+
+        //===========================================================================
+        // Rampen-Steuerung
+        //===========================================================================
+
+        void setRamp(uint32_t steps)
+        {
+            s_ramp_steps = steps;
+            ESP_LOGI(TAG, "Rampe: %lu Schritte", steps);
+        }
+
+        void setTargetSpeed(uint32_t targetUs)
+        {
+            if (targetUs < MIN_SPEED_US)
+                targetUs = MIN_SPEED_US;
+            if (targetUs > MAX_SPEED_US)
+                targetUs = MAX_SPEED_US;
+
+            if (s_ramp_steps == 0)
+            {
+                setStepSpeed(targetUs);
+                return;
+            }
+
+            s_target_speed_us = targetUs;
+            s_ramp_counter = 0;
+
+            if (s_current_speed_us > targetUs)
+            {
+                s_start_speed_us = s_current_speed_us;
+                s_ramping_up = true;
+                s_ramping_down = false;
+                ESP_LOGI(TAG, "Beschleunigung: %lu -> %lu µs", s_start_speed_us, s_target_speed_us);
+            }
+            else if (s_current_speed_us < targetUs)
+            {
+                s_start_speed_us = s_current_speed_us;
+                s_ramping_down = true;
+                s_ramping_up = false;
+                ESP_LOGI(TAG, "Verzögerung: %lu -> %lu µs", s_start_speed_us, s_target_speed_us);
+            }
+        }
+
+        bool isRamping() { return s_ramping_up || s_ramping_down; }
+
+        void smoothStop()
+        {
+            if (s_ramp_steps == 0 || s_command == MotorCommand::STOP)
+            {
+                setMotorCommand(MotorCommand::STOP);
+                return;
+            }
+
+            s_smooth_stop = true;
+            s_target_speed_us = s_current_speed_us;
+            s_start_speed_us = MAX_SPEED_US;
+            s_ramp_counter = 0;
+            s_ramping_down = true;
+            s_ramping_up = false;
+
+            ESP_LOGI(TAG, "Sanftes Stoppen (%lu Schritte)", s_ramp_steps);
+        }
+
+    } // namespace hal
+} // namespace tiny_turtle
 
 //===========================================================================
 // Legacy-Kompatibilität
 //===========================================================================
 
-void IRAM_ATTR switchStepper(uint8_t stepper, int direction) {
+void IRAM_ATTR switchStepper(uint8_t stepper, int direction)
+{
     tiny_turtle::hal::stepMotor(stepper, direction);
 }
 
-void IRAM_ATTR stopSteppers() {
+void IRAM_ATTR stopSteppers()
+{
     tiny_turtle::hal::stopMotors();
 }
 
