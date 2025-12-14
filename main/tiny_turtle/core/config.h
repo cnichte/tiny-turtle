@@ -13,28 +13,27 @@ namespace tiny_turtle
 {
     namespace config
     {
-
         //===========================================================================
         // GPIO Pin-Definitionen
         //===========================================================================
 
-        /*
-        ESP32-C6 Pin-Einschränkungen:
-        - GPIO 0, 1: USB D+/D-         - NICHT verwenden!
-        - GPIO 9: Boot Strapping       - NICHT verwenden!
-        - GPIO 12, 13: USB Serial/JTAG - NICHT verwenden!
-
-        Motor 1: GPIO 10, 11, 14, 15 (save)
-        Motor 2: GPIO 18, 19, 20, 21 (save)
-        Debug-LED: GPIO 8 (onboard)
-        */
-
+        //-----------------------------------------------------------------------
         // GPIO	  Grund	            Beschreibung
+        //-----------------------------------------------------------------------
         // 0, 1	  USB	            D- und D+ für USB-Verbindung
         // 9	  Strapping	        Boot-Mode Auswahl (muss HIGH beim Boot)
         // 12, 13 USB Serial/JTAG	Für Debugging/Flash reserviert
         // 14	  Existiert nicht	ESP32-C6 hat keinen GPIO 14
         // 24-30. Existieren nicht	ESP32-C6 hat nur GPIO 0-23
+        //-----------------------------------------------------------------------
+        // Daraus folgen die ESP32-C6 Pin-Einschränkungen:
+        // - GPIO 0, 1: USB D+/D-         - NICHT verwenden!
+        // - GPIO 9: Boot Strapping       - NICHT verwenden!
+        // - GPIO 12, 13: USB Serial/JTAG - NICHT verwenden!
+        // Motor 1: GPIO 10, 11, 14, 15 (save)
+        // Motor 2: GPIO 18, 19, 20, 21 (save)
+        // Debug-LED: GPIO 8 (onboard)
+        //-----------------------------------------------------------------------
         constexpr int A4 = 4;
         constexpr int A5 = 5;
         constexpr int A6 = 6;
@@ -79,8 +78,8 @@ namespace tiny_turtle
         constexpr float PI = 3.14159265359f;
 
         // Schrittmotor-Eigenschaften (28BYJ-48)
-        constexpr int STEPS_PER_MOTOR_ROTATION = 64;                              // Interne Schritte
-        constexpr int GEAR_RATIO = 64;                                            // Getriebeübersetzung
+        constexpr int STEPS_PER_MOTOR_ROTATION = 64; // Interne Schritte
+        constexpr int GEAR_RATIO = 64; // Getriebeübersetzung
         constexpr int STEPS_PER_ROTATION = STEPS_PER_MOTOR_ROTATION * GEAR_RATIO; // = 4096
 
         // Rad-Geometrie (in mm)
